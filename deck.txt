@@ -1,0 +1,55 @@
+centre vcentre
+   __        .                   .
+ _|  |_      | .-. .  . .-. :--. |-
+|_    _|     ;|   ||  |(.-' |  | |
+  |__|   `--'  `-' `;-| `-' '  ' `-'
+                   /  ;
+                   `-'
+
+% Node.js at Joyent:
+% Engineering for Production
+
+
+          Joshua M. Clulow
+
+      jmc@joyent.com  @jmclulow
+
+---------------------分页------------------------
+
+centre
+
+% node-vasync
+% Observable Asynchronous Control Flow
+
+* Written by Dave Pacheco (Joyent)
+      ~davepacheco/node-vasync~ on github
+
+* Similar in concept to ~caolan/async~, but with a focus
+    on observability
+
+* Returns status objects updated as flow progresses that
+    can be inspected in core files, or exported via web
+    services or REPLs
+
+* Provides the ~barrier()~ primitive: specify some set of
+    named operations (you can extend the set mid-flight)
+    and get a ~drain~ event when they all complete
+
+---------------------分页------------------------
+
+centre
+
+% Kang
+% Distributed System Observability
+
+* Written by Dave Pacheco (Joyent)
+      ~davepacheco/kang~ on github
+
+* A library for exposing self-describing state from
+    a set of processes via a web service
+
+* A client library and command-line tool for collecting,
+    aggregating and inspecting that state
+
+* The exposed state is a set of ~"objects"~ arranged by
+    ~"type"~, formatted as a JSON payload

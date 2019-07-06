@@ -13,10 +13,14 @@
   },
   "homepage": "https://github.com/jclulow/vtmc",
   "dependencies": {
-    "ansiterm": "~0.0.2",
-    "extsprintf": "~1.0.2"
+    "ansiterm": "~1.1.0",
+    "extsprintf": "~1.4.0"
   },
   "bin": {
     "vtmc": "./cmd/vtmc.js"
+  },
+  "devDependencies": {
+    "@types/extsprintf": "^1.4.1",
+    "@types/node": "^12.0.12"
   }
 }
