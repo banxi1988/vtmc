@@ -5,6 +5,7 @@ import fs from "fs";
 
 import extsprintf from "extsprintf";
 const ansiterm = require("ansiterm");
+import chalk from "chalk";
 interface Size {
   w: number;
   h: number;
@@ -70,12 +71,21 @@ class Slide {
 }
 
 const term = new ansiterm.ANSITerm();
+const SLIDE_OPTS_SEPERATOR = {
+  begin: "__slide_opts_begin__",
+  end: "__slide_opts_end__"
+};
 class Deckterm {
   constructor() {}
 
   writeText(text: string, blue: boolean, intensity: number) {
     term.color256(blue ? blue_ramp(intensity) : intensity);
     term.write(text);
+    // if (blue) {
+    //   term.write(chalk.blue(text));
+    // } else {
+    //   term.write(chalk.redBright(text));
+    // }
   }
 
   writeHeading(text: string, intensity: number, voffset: number) {
@@ -100,7 +110,7 @@ class Deckterm {
     let escape = false;
     let partial = "";
 
-    if (line[0] === "%") {
+    if (line[0] === "%" || line[0] === "#") {
       this.writeHeading(line.substr(1).trim(), intensity, voffset);
       return;
     }
@@ -118,6 +128,7 @@ class Deckterm {
           escape = true;
           break;
         case "~":
+        case "`":
           if (partial.length > 0) {
             this.writeText(partial, blue_on, intensity);
             partial = "";
@@ -166,23 +177,43 @@ class Deck {
     this.working = false;
     this.slides = [];
     this.pos = 0;
-    this.opts = {
-      header: {
-        center: "Linux/Unix 命令行生存指南"
-      },
-      footer: {
-        left: "CodeTalks",
-        right: "2019/07/05",
-        center: "0/0"
-      }
-    };
+    this.opts = {};
   }
 
   loadDeck(deckPath: string) {
     this.deckPath = deckPath;
     const body = fs.readFileSync(deckPath, "utf8");
     const slides = [];
-    const body_lines = body.split("\n");
+    let body_lines = body.split("\n");
+    // extract slide_opts if any
+    let opts_start = -1;
+    let opts_end = -1;
+    for (let i = 0; i < body_lines.length; i++) {
+      const line = body_lines[i];
+      if (line.includes(SLIDE_OPTS_SEPERATOR.begin)) {
+        opts_start = i;
+      } else if (line.includes(SLIDE_OPTS_SEPERATOR.end)) {
+        opts_end = i;
+      }
+      if (opts_start != -1 && opts_end != -1) {
+        break;
+      }
+    }
+    if (opts_start != -1 && opts_end != -1) {
+      let opts_lines = body_lines.slice(opts_start + 2, opts_end - 1);
+      let opts_str = opts_lines.join("\n");
+      // console.info("opts_str:\n", opts_str);
+      let opts = JSON.parse(opts_str);
+      if (opts) {
+        this.opts = opts;
+      }
+
+      body_lines = body_lines.slice(opts_end + 1);
+    }
+    // console.info("body_lines:\n");
+    // console.info(body_lines);
+    // throw Error("inspect body_lines");
+
     let slide_lines = [];
     for (const line of body_lines) {
       if (line.includes(this.slide_seperator)) {
@@ -275,6 +306,7 @@ class Deck {
   setupTerminal() {
     term.clear();
     term.cursor(false);
+    term.bold();
     term.on("resize", (size: Size) => this.onResize(size));
     term.on("keypress", (key: string) => {
       if (key === "q") {
