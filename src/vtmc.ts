@@ -72,8 +72,8 @@ class Slide {
 
 const term = new ansiterm.ANSITerm();
 const SLIDE_OPTS_SEPERATOR = {
-  begin: "__slide_opts_begin__",
-  end: "__slide_opts_end__"
+  begin: "slide_opts_begin",
+  end: "slide_opts_end"
 };
 class Deckterm {
   constructor() {}
@@ -180,16 +180,12 @@ class Deck {
     this.opts = {};
   }
 
-  loadDeck(deckPath: string) {
-    this.deckPath = deckPath;
-    const body = fs.readFileSync(deckPath, "utf8");
-    const slides = [];
-    let body_lines = body.split("\n");
+  private extractOpts(lines: string[]) {
     // extract slide_opts if any
     let opts_start = -1;
     let opts_end = -1;
-    for (let i = 0; i < body_lines.length; i++) {
-      const line = body_lines[i];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
       if (line.includes(SLIDE_OPTS_SEPERATOR.begin)) {
         opts_start = i;
       } else if (line.includes(SLIDE_OPTS_SEPERATOR.end)) {
@@ -200,7 +196,21 @@ class Deck {
       }
     }
     if (opts_start != -1 && opts_end != -1) {
-      let opts_lines = body_lines.slice(opts_start + 2, opts_end - 1);
+      // find ``` json part
+      let json_start = 0;
+      let json_end = 0;
+      for (let i = opts_start + 1; i < opts_end; i++) {
+        if (lines[i].includes("```")) {
+          if (!json_start) {
+            json_start = i;
+          } else if (!json_end) {
+            json_end = i;
+          } else {
+            break;
+          }
+        }
+      }
+      let opts_lines = lines.slice(json_start + 1, json_end);
       let opts_str = opts_lines.join("\n");
       // console.info("opts_str:\n", opts_str);
       let opts = JSON.parse(opts_str);
@@ -208,8 +218,16 @@ class Deck {
         this.opts = opts;
       }
 
-      body_lines = body_lines.slice(opts_end + 1);
+      return lines.slice(opts_end + 1);
     }
+    return lines;
+  }
+
+  loadDeck(deckPath: string) {
+    this.deckPath = deckPath;
+    const body = fs.readFileSync(deckPath, "utf8");
+    const slides = [];
+    let body_lines = this.extractOpts(body.split("\n"));
     // console.info("body_lines:\n");
     // console.info(body_lines);
     // throw Error("inspect body_lines");
